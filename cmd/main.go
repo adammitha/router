@@ -18,9 +18,10 @@ func main() {
 		logrus.New(),
 		*port,
 	}
+	srv.mux.AddMiddleware(srv.logger)
 	srv.routes()
-	srv.log.Infoln("Listening on port 8080...")
-	http.ListenAndServe(":8080", srv.mux)
+	srv.log.Infof("Listening on port %d...", srv.port)
+	http.ListenAndServe(fmt.Sprintf(":%d", srv.port), srv.mux)
 }
 
 type Server struct {
@@ -32,5 +33,15 @@ type Server struct {
 func (s *Server) routes() {
 	s.mux.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, world!")
+	})
+}
+
+func (s *Server) logger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.log.WithFields(logrus.Fields{
+			"method": r.Method,
+			"url":    r.URL,
+		}).Info()
+		next.ServeHTTP(w, r)
 	})
 }

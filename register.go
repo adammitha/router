@@ -2,7 +2,7 @@ package router
 
 import "net/http"
 
-func (r *Router) register(method, pattern string, handler http.HandlerFunc) {
+func (r *Router) register(method, pattern string, handler http.Handler) {
 	for _, m := range r.middleware {
 		handler = m(handler)
 	}
@@ -11,7 +11,7 @@ func (r *Router) register(method, pattern string, handler http.HandlerFunc) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		handler(w, r)
+		handler.ServeHTTP(w, r)
 	})
 }
 
